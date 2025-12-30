@@ -368,7 +368,30 @@ def test_sem_drone_eval():
         VecTask_cfg, Env_Config.rl_device, Env_Config.sim_device,
         Env_Config.graphics_device_id, Env_Config.headless, **paras)
     
+def test_data_collection():
+    
+    from Envs.Wrappers import pre_process_env_config, register_env
+    from Train.Wappers import pre_process_train_config, register_network, build_runner
+    from isaacgymenvs.utils.utils import set_np_formatting, set_seed
+    import os 
+    from Envs.Wrappers_SB3 import EnvWrapperSB3
 
+    # set_np_formatting()
+
+    from Configs.RLDrone.pre_process_cfg import pre_process_cfg_skrl
+    VecTask_cfg = pre_process_cfg_skrl()
+
+    from Configs.RLDrone.Custom.Config import Env_Config
+    # test = RLDrone(
+    #     VecTask_cfg, Env_Config.rl_device, Env_Config.sim_device,
+    #     Env_Config.graphics_device_id, Env_Config.headless)
+    from Envs.RLDrone.DataCollectionEnv import DataCollectionEnv
+    test = DataCollectionEnv(
+        VecTask_cfg, Env_Config.rl_device, Env_Config.sim_device,
+        Env_Config.graphics_device_id, Env_Config.headless)
+
+    # test.reset()
+    test.collect_data()
 
  
 
@@ -383,4 +406,6 @@ if __name__ == "__main__":
 
     # test_skrl()
 
-    test_sem_drone_eval()
+    # test_sem_drone_eval()
+
+    test_data_collection()
