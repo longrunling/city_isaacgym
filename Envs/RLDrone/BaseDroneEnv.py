@@ -75,6 +75,7 @@ class BaseDroneEnv(VecTask):
         self.envs_actors = []
         self.cameras = []
         self.drone_root_state_idx = []
+        self.boundaries = None
 
         # 动作相关变量
         self.pose_low = torch.tensor(self.config.pose_low, dtype=torch.float32, device=self.device, requires_grad=False)
@@ -749,6 +750,8 @@ class simple_citygen():
                     spacing = max(spacing, scene_max_dim)
         except Exception as e:
             print(f"[BaseDroneEnv] warning computing dynamic spacing: {e}")
+
+        self.boundaries = (min(xs) - padding, max(xs) + padding, min(ys) - padding, max(ys) + padding) if xs and ys else None
 
         self.env.env_origins[:, 0] = spacing * xx.flatten()[:self.env.num_envs]
         self.env.env_origins[:, 1] = spacing * yy.flatten()[:self.env.num_envs]
