@@ -351,6 +351,7 @@ def test_sem_drone_eval():
 
     from Configs.RLDrone.Custom.Config import Env_Config
     from Envs.RLDrone.RLDrone_Sem import RLDrone_Sem
+    from Envs.RLDrone.RLDrone_Sem_eval import RLDrone_Sem_eval
     from Envs.RLDrone.BaseDroneEnv import simple_citygen
 
     env_gen = simple_citygen()
@@ -359,7 +360,11 @@ def test_sem_drone_eval():
     train_env = RLDrone_Sem(
         VecTask_cfg, Env_Config.rl_device, Env_Config.sim_device,
         Env_Config.graphics_device_id, Env_Config.headless, **paras)
-    
+
+    eval_env = RLDrone_Sem_eval(
+        VecTask_cfg, Env_Config.rl_device, Env_Config.sim_device,
+        Env_Config.graphics_device_id, Env_Config.headless, **paras)
+
     train_env.reset()
 
     for i in range(50):

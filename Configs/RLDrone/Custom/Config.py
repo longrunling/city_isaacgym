@@ -132,6 +132,11 @@ class RLDrone_Sem_Config(SemanticOccDrone_Config):
    # 最高惩罚步数
    max_penalty_steps = 2
 
+class RL_Drone_Sem_eval_Config(RLDrone_Sem_Config):
+
+   # 评估环境数量
+   eval_num_envs = 4
+
 class Train_Config:
 
    pass

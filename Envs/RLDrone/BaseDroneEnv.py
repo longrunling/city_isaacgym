@@ -65,8 +65,6 @@ class BaseDroneEnv(VecTask):
 
         self._create_envs()
 
-        print('ok')
-
     def _create_envs(self):
 
         self._create_lights()

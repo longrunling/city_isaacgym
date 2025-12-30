@@ -3,10 +3,11 @@ from Envs.utils import *
 import torch
 import numpy as np
 from collections import deque
-from Configs.RLDrone.Custom.Config import RLDrone_Sem_Config
+from Configs.RLDrone.Custom.Config import RL_Drone_Sem_eval_Config
 from gym.spaces import Box, Dict, MultiDiscrete
+from Envs.RLDrone.RLDrone_Sem import RLDrone_Sem
 
-class RLDrone_Sem_eval(SemanticOccDrone):
+class RLDrone_Sem_eval(RLDrone_Sem):
 
     def __init__(self, 
             VecTask_cfg, 
@@ -15,6 +16,10 @@ class RLDrone_Sem_eval(SemanticOccDrone):
             graphics_device_id, 
             headless,
             **kwargs):
+        
+        # 使用eval_num_envs覆盖num_envs
+        VecTask_cfg['env']['numEnvs'] = \
+            RL_Drone_Sem_eval_Config.eval_num_envs
 
         super().__init__(
             VecTask_cfg, 
@@ -24,195 +29,7 @@ class RLDrone_Sem_eval(SemanticOccDrone):
             headless,
             **kwargs)
 
-        self.config = RLDrone_Sem_Config
-
-        self._create_obs_act_space()
-        self._create_buffers_RL()
-
-    def _create_obs_act_space(self):
-        '''
-        获取观测空间与动作空间
-        设置了VecTask的属性
-        self.num_actions, self.act_space, self.obs_space
-        '''
-        # 动作空间
-        action_space_size = (
-            self.pose_up_idx - self.pose_low_idx + 1).cpu().numpy()
-        self.action_size = action_space_size.shape[0]
-        self.num_actions = self.action_size
-
-        '''
-        使用self.action_space调用
-        '''
-        # For SB3
-        self.act_space = MultiDiscrete(nvec=torch.Size(action_space_size))
-
-        # 观测空间
-        # 状态空间
-        pose_up = self.get_pose_from_pose_idx(
-            self.pose_up_idx).cpu().numpy().reshape(1, -1)
-        pose_up = pose_up.repeat(self.buffer_size, axis=0).astype(np.float32)
-        pose_low = self.get_pose_from_pose_idx(
-            self.pose_low_idx).cpu().numpy().reshape(1, -1)
-        pose_low = pose_low.repeat(self.buffer_size, axis=0).astype(np.float32)
-        state_space = Box(low=pose_low, high=pose_up,
-            shape=(self.buffer_size, self.action_size), dtype=np.int64)
-        
-        # 语义地图空间
-        sem_occ_space = Box(low=-torch.inf, high=torch.inf,
-            shape=tuple(self.sem_map_size), dtype=np.float32)
-
-        '''
-        使用self.observation_space调用
-        '''
-        self.obs_space = Dict({
-            'state': state_space,
-            'occ_map': sem_occ_space
-        })
-
-        # for network input shape
-        self.input_shape = {
-            'state': (self.buffer_size, self.action_size),
-            'occ_map': tuple(self.sem_map_size),
-        }        
-
-    def _create_buffers_RL(self):
-        
-        # 创建轨迹长度缓存
-        self.episode_length_buf = torch.zeros(
-            self.num_envs, device=self.device, dtype=torch.long, requires_grad=False)
-
-        # 创建是否重置缓存
-        self.reset_buf = torch.zeros(
-            self.num_envs, device=self.device, dtype=torch.bool, requires_grad=False)
-        
-        # 创建高度覆盖率buffer
-        self.height_coverage_buf = deque(maxlen=max(self.buffer_size, 2))
-        self.height_coverage_buf.extend(
-            max(self.buffer_size, 2) * [torch.zeros(self.num_envs, device=self.device)])
-
-        # 创建总奖励缓存
-        self.reward_keys = ['height_coverage', 'short_path', 'sum']
-        self.episode_rewards = {
-            name: torch.zeros(
-                self.num_envs, dtype=torch.float, device=self.device, requires_grad=False)
-            for name in self.reward_keys
-        }
-        
-        # 额外信息
-        self.rewbuffer = {
-            name: deque(maxlen=100) for name in self.reward_keys
-        }
-        self.lenbuffer = deque(maxlen=100)
-        self.time_out_buf = (self.episode_length_buf >= self.buffer_size)
-        self.extras = {}
-        
-    def reset_idx(self, env_idx):
-        '''
-        重置env_idxs指定的环境
-        '''
-        num_envs = len(env_idx)
-        if num_envs == 0:
-            return
-
-        # 必须调用父类的reset_envs
-        super().reset_idx(env_idx)
-
-        # 重置是否重置缓存
-        self.reset_buf[env_idx] = 0
-
-        # 重置高度覆盖率缓存
-        for buf_idx in range(self.buffer_size):
-            self.height_coverage_buf[buf_idx][env_idx] = 0
-
-        # 重置总奖励缓存
-        for name in self.reward_keys:
-            self.episode_rewards[name][env_idx] = 0.
-
-        # 记录是否因为时间步数用尽而重置
-        self.extras["time_outs"] = self.time_out_buf
-
-        # 重置轨迹长度缓存
-        self.episode_length_buf[env_idx] = 0        
-
-    def update_height_coverage(self):
-        '''
-        计算高度探索程度
-        '''
-        # 获取当前的height_map与gt_height_map
-        height_map = self.height_map
-        gt_height_map = self.gt_height_map
-
-        # 计算height_map探索程度
-        residual = torch.abs(height_map - gt_height_map)
-        residual_ratio = residual / (gt_height_map)
-        # 当height_map与gt_height_map的差值小于一定百分比时，认为该位置被探索到
-        mask = residual_ratio < self.config.residual_ratio_threshold
-        area = self.sem_map_size[0] * self.sem_map_size[1]
-        height_coverage = torch.sum(mask, dim=(1,2)) / area
-
-        self.height_coverage_buf.append(height_coverage)
-
-    def get_observations(self):
-        '''
-        更新所有状态
-        '''
-        # 获取新的视觉观测
-        self.update_visual()
-
-        # 更新语义占据图和高度图
-        self.update_semantic_occ_map()
-
-        # 更新高度覆盖率
-        self.update_height_coverage()
-
-        # 网络输入
-        # 状态
-        state = torch.stack(tuple(self.pose_buf),dim=1)
-
-        # 当前高度图,使用动作空间进行归一化
-        occ_map = self.height_map.clone()
-        max_height = self.env_max_cord[:, 2]
-        min_height = 0
-        temp = (max_height - min_height).reshape(-1, 1, 1)
-        occ_map = (occ_map - min_height) / temp
-
-        return {
-            'state': state,
-            'occ_map': occ_map
-        }
-    
-    def reset(self):
-
-        # 重置所有环境
-        env_idx = torch.arange(self.num_envs, dtype=torch.int64, device=self.device)
-        self.reset_idx(env_idx)
-
-        # 使用初始位姿作为初始动作
-        init_pose = self.init_pose.repeat(self.num_envs, 1)
-        self.update_pose(init_pose)
-
-        # 获取初始观测
-        obs = self.get_observations()
-
-        # 更新轨迹长度
-        self.episode_length_buf += 1   
-
-        # 计算奖励
-        _ = self.calculate_reward()
-
-        # 更新额外的结束信息
-        dones = torch.ones(
-            self.num_envs, device=self.device, dtype=torch.bool, requires_grad=False)
-        self.update_extra_episode_info(dones)                      
-
-        # 重置所有环境
-        env_idx = torch.arange(self.num_envs, dtype=torch.int64, device=self.device)
-        self.reset_idx(env_idx)        
-
-        # self.render()
-
-        return obs
+        self.config = RL_Drone_Sem_eval_Config
 
     def step(self, actions):
 
