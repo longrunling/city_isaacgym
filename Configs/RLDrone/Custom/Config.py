@@ -4,7 +4,7 @@ import inspect
 class Env_Config:
 
    # simulation
-   headless = False
+   headless = True
    num_envs = 8
    sim_device = 'cuda:0'
    rl_device = 'cuda:0'
