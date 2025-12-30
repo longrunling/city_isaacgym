@@ -360,27 +360,17 @@ def test_sem_drone_eval():
     train_env = RLDrone_Sem(
         VecTask_cfg, Env_Config.rl_device, Env_Config.sim_device,
         Env_Config.graphics_device_id, Env_Config.headless, **paras)
+    
+    from Envs.Wrappers_SB3 import EnvWrapperSB3
+    train_env_sb3 = EnvWrapperSB3(train_env)
 
     eval_env = RLDrone_Sem_eval(
         VecTask_cfg, Env_Config.rl_device, Env_Config.sim_device,
         Env_Config.graphics_device_id, Env_Config.headless, **paras)
+    
 
-    train_env.reset()
 
-    for i in range(50):
-
-        train_env.update_visual()
-        train_env.update_semantic_occ_map()
-
-        action = train_env.sample_pose_idx()
-        pose = train_env.get_pose_from_pose_idx(action)
-        train_env.update_pose(pose)
-
-    # train_env.visualize_semantic_occ_map_soft_max(0, class_name=['building'])
-    train_env.visualize_semantic_occ_map_soft_max(0, class_name=['people'])
-    # train_env.visualize_semantic_occ_map_soft_max(0, class_name=['car'])
-
-    print('ok') 
+ 
 
     
 if __name__ == "__main__":
