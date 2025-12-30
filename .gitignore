@@ -1,0 +1,9 @@
+simple_citygen/data/*
+__pycache__/
+*.png
+*.obj
+*.jpg
+*.pth
+*/outputs/
+Datas/
+Datas_city/

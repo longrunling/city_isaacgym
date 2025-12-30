@@ -1,0 +1,6 @@
+
+numpy
+scipy
+matplotlib
+trimesh
+pyglet==1.5.31
