@@ -140,3 +140,18 @@ class RL_Drone_Sem_eval_Config(RLDrone_Sem_Config):
 class Train_Config:
 
    pass
+
+class DataCollection_Config(BaseDroneEnv_Config):
+   
+   type = 'nearby' # 'random' or 'nearby'
+
+   max_steps = 5
+
+   height_low = 5.0
+   height_high = 50.0
+
+   max_attempts = 15 # maximum attempts for collision-free sampling
+
+   height_change_scale = 20.0 # scale for height change when sampling nearby
+
+   pitch_range_deg = 45.0 # pitch variation range from downward vertical
