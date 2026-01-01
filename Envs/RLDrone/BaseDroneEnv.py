@@ -546,7 +546,27 @@ class simple_citygen():
 
         # 记录已获取的点云
         self.num_samples = -1
-        self._asset_cache_pytorch3d = {}
+
+    def copy_env(self, env_gen):
+        '''
+        复制另一个实例的信息
+        用于多进程前
+        '''
+        self._class_seg_id = env_gen._class_seg_id.copy()
+        self._next_class_seg_id = env_gen._next_class_seg_id
+        self._created_env_idx = env_gen._created_env_idx
+
+    def clear(self):
+        '''
+        清除资产目录
+        保留已创建编号
+        '''
+        self.env = None
+        self.config = None
+        self.device = None
+        self._asset_cache = {}
+        self._obj_paths = []
+        self._asset_cache_pytorch3d = None
 
     def attach_env(self, BaseDroneEnv: BaseDroneEnv):
         '''
@@ -784,30 +804,26 @@ class simple_citygen():
         num_samples = max(num_samples)
         num_samples = max(num_samples, 60000)
 
-        # 如果采样点数发生变化则重新采样否则跳过
-        if num_samples != self.num_samples:
-            self.num_samples = num_samples
-            print(f"[simple_citygen] sampling {num_samples} points per asset for semantic mapping.")
+        self.num_samples = num_samples
+        print(f"[simple_citygen] sampling {num_samples} points per asset for semantic mapping.")
 
-            # 从 meshes 中采样点云
-            point_clouds = sample_points_from_meshes(meshes, num_samples)
-            # 绕x轴旋转90度
-            rotation_matrix = torch.tensor(
-                [
-                    [1, 0, 0],
-                    [0, 0, -1],
-                    [0, 1, 0]
-                ], dtype=torch.float32, device=self.device
-            )
-            rotation_matrixs = rotation_matrix.unsqueeze(0).repeat(
-                point_clouds.shape[0], 1, 1).permute(0, 2, 1)
-            point_clouds = torch.bmm(point_clouds, rotation_matrixs)
+        # 从 meshes 中采样点云
+        point_clouds = sample_points_from_meshes(meshes, num_samples)
+        # 绕x轴旋转90度
+        rotation_matrix = torch.tensor(
+            [
+                [1, 0, 0],
+                [0, 0, -1],
+                [0, 1, 0]
+            ], dtype=torch.float32, device=self.device
+        )
+        rotation_matrixs = rotation_matrix.unsqueeze(0).repeat(
+            point_clouds.shape[0], 1, 1).permute(0, 2, 1)
+        point_clouds = torch.bmm(point_clouds, rotation_matrixs)
 
-            self._asset_cache_pytorch3d = {}
-            for i, obj_path in enumerate(self._obj_paths):
-                self._asset_cache_pytorch3d[obj_path] = point_clouds[i]
-        else:
-            print(f"[simple_citygen] skipping point cloud sampling, using cached {self.num_samples} points per asset.")       
+        self._asset_cache_pytorch3d = {}
+        for i, obj_path in enumerate(self._obj_paths):
+            self._asset_cache_pytorch3d[obj_path] = point_clouds[i]      
 
     def create_ground_truth_sem_map(self):
         '''

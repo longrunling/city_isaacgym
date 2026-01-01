@@ -5,7 +5,7 @@ class Env_Config:
 
    # simulation
    headless = True
-   num_envs = 8
+   num_envs = 64
    sim_device = 'cuda:0'
    rl_device = 'cuda:0'
    graphics_device_id = 0

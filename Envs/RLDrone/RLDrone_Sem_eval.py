@@ -31,8 +31,49 @@ class RLDrone_Sem_eval(RLDrone_Sem):
 
         self.config = RL_Drone_Sem_eval_Config
 
+    def reset(self):
+
+        # 重置所有环境
+        env_idx = torch.arange(self.num_envs, dtype=torch.int64, device=self.device)
+        self.reset_idx(env_idx)
+
+        # 使用初始位姿作为初始动作
+        init_pose = self.init_pose.repeat(self.num_envs, 1)
+        self.update_pose(init_pose)
+
+        # 获取初始观测
+        obs = self.get_observations()
+
+        # 更新轨迹长度
+        self.episode_length_buf += 1   
+
+        # 检查是否需要重置环境
+        self.check_termination()
+
+        # 完成标志
+        dones = self.reset_buf.clone()
+
+        # 计算奖励
+        reward = self.calculate_reward()
+
+        # 返回覆盖率
+        height_coverage = self.height_coverage_buf[-1]        
+
+        # 更新额外的结束信息
+        self.update_extra_episode_info(dones)                      
+
+        # 重置所有环境
+        env_idx = torch.arange(self.num_envs, dtype=torch.int64, device=self.device)
+        self.reset_idx(env_idx)
+
+        return obs, reward, dones, self.extras, height_coverage.cpu().numpy()
+
     def step(self, actions):
 
+        if not torch.is_tensor(actions):
+            actions = torch.tensor(actions, device=self.device, requires_grad=False)
+            if len(actions.shape) == 1:
+                actions = actions.unsqueeze(0)        
         self.actions = actions.clone()
 
         # 获取上一次被重置的环境的索引，被重置的环境episode_length_buf为0
@@ -74,4 +115,4 @@ class RLDrone_Sem_eval(RLDrone_Sem):
         # 返回覆盖率
         height_coverage = self.height_coverage_buf[-1]
 
-        return obs, reward, dones, self.extras, height_coverage
+        return obs, reward, dones, self.extras, height_coverage.cpu().numpy()
