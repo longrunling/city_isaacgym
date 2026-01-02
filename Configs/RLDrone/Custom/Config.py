@@ -6,9 +6,9 @@ class Env_Config:
    # simulation
    headless = True
    num_envs = 8
-   sim_device = 'cuda:4'
-   rl_device = 'cuda:4'
-   graphics_device_id = 4
+   sim_device = 'cuda:0'
+   rl_device = 'cuda:0'
+   graphics_device_id = 0
    multi_gpu = False
    seed = 1
 

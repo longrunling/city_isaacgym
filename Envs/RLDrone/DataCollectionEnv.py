@@ -9,8 +9,8 @@ import torchvision.utils as vutils
 from Configs.RLDrone.Custom.Config import DataCollection_Config
 
 class DataCollectionEnv(BaseDroneEnv):
-    def __init__(self, VecTask_cfg, rl_device, sim_device, graphics_device_id, headless):
-        super(DataCollectionEnv, self).__init__(VecTask_cfg, rl_device, sim_device, graphics_device_id, headless)
+    def __init__(self, VecTask_cfg, rl_device, sim_device, graphics_device_id, headless, **kwargs):
+        super(DataCollectionEnv, self).__init__(VecTask_cfg, rl_device, sim_device, graphics_device_id, headless, **kwargs)
         self.data_collection = []
         self.config = DataCollection_Config
 
@@ -19,7 +19,7 @@ class DataCollectionEnv(BaseDroneEnv):
         run_dir = f"runs/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         os.makedirs(run_dir, exist_ok=True)
 
-        b = self.boundaries
+        b = self.simple_citygen.boundaries
         low_limit = torch.tensor([b[0], b[2], self.config.height_low], device=self.device)
         high_limit = torch.tensor([b[1], b[3], self.config.height_high], device=self.device)
 
@@ -91,7 +91,7 @@ class DataCollectionEnv(BaseDroneEnv):
                 # 保存图像 (按要求命名)
                 vutils.save_image(rgb.float() / 255.0, f"{run_dir}/rgb_{env_idx}_{step_idx}.png")
                 vutils.save_image(depth / self.config.Camera.depth_range, f"{run_dir}/depth_{env_idx}_{step_idx}.png")
-                vutils.save_image(seg.float() / self._next_seg_id, f"{run_dir}/seg_{env_idx}_{step_idx}.png")
+                vutils.save_image(seg.float() / self.simple_citygen._next_class_seg_id, f"{run_dir}/seg_{env_idx}_{step_idx}.png")
 
                 # 记录索引信息
                 self.data_collection.append({

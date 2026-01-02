@@ -100,6 +100,9 @@ class BaseDroneEnv(VecTask):
         # 获取环境原点
         self.simple_citygen._get_env_origins()
 
+        # 初始化每个 env 的 pose 缓存（position x,y,z + heading roll,pitch,yaw）
+        self.pose = torch.zeros((self.num_envs, 6), dtype=torch.float32, device=self.device)
+
         # 创建num_envs个环境
         for i in tqdm(range(self.num_envs), desc='Creating Environments'):
 

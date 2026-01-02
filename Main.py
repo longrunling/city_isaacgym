@@ -386,9 +386,14 @@ def test_data_collection():
     #     VecTask_cfg, Env_Config.rl_device, Env_Config.sim_device,
     #     Env_Config.graphics_device_id, Env_Config.headless)
     from Envs.RLDrone.DataCollectionEnv import DataCollectionEnv
+    from Envs.RLDrone.BaseDroneEnv import simple_citygen
+
+    env_gen = simple_citygen()
+    paras = {'simple_citygen': env_gen}
+
     test = DataCollectionEnv(
         VecTask_cfg, Env_Config.rl_device, Env_Config.sim_device,
-        Env_Config.graphics_device_id, Env_Config.headless)
+        Env_Config.graphics_device_id, Env_Config.headless, **paras)
 
     # test.reset()
     test.collect_data()
