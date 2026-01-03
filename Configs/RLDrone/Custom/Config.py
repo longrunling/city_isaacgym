@@ -5,7 +5,7 @@ class Env_Config:
 
    # simulation
    headless = True
-   num_envs = 8
+   num_envs = 64
    sim_device = 'cuda:0'
    rl_device = 'cuda:0'
    graphics_device_id = 0
@@ -155,3 +155,19 @@ class DataCollection_Config(BaseDroneEnv_Config):
    height_change_scale = 20.0 # scale for height change when sampling nearby
 
    pitch_range_deg = 45.0 # pitch variation range from downward vertical
+
+class SemanticDataset_Config(BaseDroneEnv_Config):
+   
+   sampling = 'nearby'
+   max_steps = 5
+   height_low = 5.0
+   height_high = 50.0
+   max_attempts = 15
+   height_change_scale = 20.0
+   pitch_range_deg = 45.0
+   channels_first = True
+   include_background = False
+   vote_min_count_k = 1
+   alpha = SemanticOccDrone_Config.alpha
+   class Camera(BaseDroneEnv_Config.Camera):
+      horizontal_fov = BaseDroneEnv_Config.Camera.horizontal_fov
