@@ -535,11 +535,14 @@ class simple_citygen():
         '''
         self.placements = self._parse_placements()
 
-        # segmentation id 映射：相同 obj/urdf 使用相同 seg id
+        # segmentation id 映射：类别名 -> 类编号
         self._class_seg_id = {}
 
         # 记录class编号
         self._next_class_seg_id = 0
+
+        # segmentation 映射：actor seg id -> 类编号
+        self._seg_id_to_cls = {}
 
         # 资产缓存，避免重复 load
         self._asset_cache = {}
@@ -738,6 +741,8 @@ class simple_citygen():
                 try:
                     segmentation_id = self.env.envs_actors_num[env_idx]
                     # 使用当前环境已有 actor 数量作为 seg id
+                    # 记录 seg id -> 类编号 映射
+                    self._seg_id_to_cls[segmentation_id] = self._class_seg_id[class_name]
                     self.env._create_actor(
                         env_idx, asset, name, segmentation_id=segmentation_id, pose=pose)
                 except Exception as e:
