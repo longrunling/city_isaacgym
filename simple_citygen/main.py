@@ -254,7 +254,7 @@ def load_and_visualize_obj(obj_path: str):
 if __name__ == '__main__':
     params = {
         # Macro
-        'placement_variants': 256,
+        'placement_variants': 128,
         'seed': 114514,
 
         # Roadmap / growth parameters (canonical names)
