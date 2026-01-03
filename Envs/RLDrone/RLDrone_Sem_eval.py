@@ -57,7 +57,7 @@ class RLDrone_Sem_eval(RLDrone_Sem):
         reward = self.calculate_reward()
 
         # 返回覆盖率
-        height_coverage = self.height_coverage_buf[-1]        
+        height_coverage = self.height_coverage_buf[-1].clone()
 
         # 更新额外的结束信息
         self.update_extra_episode_info(dones)                      
@@ -108,11 +108,11 @@ class RLDrone_Sem_eval(RLDrone_Sem):
         # 更新额外的结束信息
         self.update_extra_episode_info(dones)
 
+        # 返回覆盖率
+        height_coverage = self.height_coverage_buf[-1].clone()        
+
         # 计算需要重置的环境索引并重置
         env_idx = self.reset_buf.nonzero(as_tuple=False).flatten()
         self.reset_idx(env_idx)
-
-        # 返回覆盖率
-        height_coverage = self.height_coverage_buf[-1]
 
         return obs, reward, dones, self.extras, height_coverage.cpu().numpy()

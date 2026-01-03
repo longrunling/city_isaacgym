@@ -346,6 +346,9 @@ def test_Sem_drone():
 
 def test_sem_drone_eval():
 
+    # from utils.logger import CompleteLogger
+    # logger = CompleteLogger("Log")  
+
     from Configs.RLDrone.pre_process_cfg import pre_process_cfg_skrl
     VecTask_cfg = pre_process_cfg_skrl()    
 
@@ -403,7 +406,7 @@ def test_sem_drone_eval():
                 )
             ),
             env=train_env_sb3,
-            learning_rate=1e-4,
+            learning_rate=1e-3,
             gamma=0.99,
             gae_lambda=0.95,
             target_kl=0.2,
@@ -431,7 +434,7 @@ def test_sem_drone_eval():
 
     save_freq = 10000
     # 每个环境采eval_freq后进行一次评估
-    eval_freq = 1000
+    eval_freq = 1280
 
     model.learn(
         # training

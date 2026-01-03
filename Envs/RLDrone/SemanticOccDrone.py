@@ -43,8 +43,8 @@ class SemanticOccDrone(OccMapDrone):
         self._calculate_gt_semantic_occ_map()
         
         # for debug
-        self.visualize_ground_truth_sem_map(0)
-        self.visualize_ground_truth_height_map(0)
+        # self.visualize_ground_truth_sem_map(0)
+        # self.visualize_ground_truth_height_map(0)
         # self.render_forever()
 
     def _create_buffers_Semantic(self):
@@ -55,14 +55,14 @@ class SemanticOccDrone(OccMapDrone):
             sem_map_size, dtype=torch.int32, device=self.device)
 
         self.sem_occ_map = torch.zeros(
-            self.num_envs, 
+            self.num_envs,
             sem_map_size[0], sem_map_size[1],
             len(self.texts),
             dtype=torch.float32, device=self.device, requires_grad=False)
         
         # 高度图
         self.height_map = torch.zeros(
-            self.num_envs, 
+            self.num_envs,
             sem_map_size[0], sem_map_size[1],
             dtype=torch.float32, device=self.device, requires_grad=False)
         
@@ -224,11 +224,11 @@ class SemanticOccDrone(OccMapDrone):
         更新语义占据图与高度图
         需要先调用update_visual()获取最新的rgb图像
         '''
-        # 获取当前rgb图像的编码
-        self._get_rgb_feature()
+        # # 获取当前rgb图像的编码
+        # self._get_rgb_feature()
 
-        # 查询语义相似度,存储在self.similarity
-        self._query_semantic()
+        # # 查询语义相似度,存储在self.similarity
+        # self._query_semantic()
 
         # 全部点云
         self.get_point_cloud(min_seg_id=0)
@@ -298,17 +298,17 @@ class SemanticOccDrone(OccMapDrone):
             self.sem_voxel_size,
             self.sem_map_size)        
 
-        # 获取前景相似度
-        fg_similarity = self.similarity.reshape(
-            self.num_envs, -1, len(self.texts))
-        fg_similarity = [
-            fg_similarity[idx, self.fg_coord[idx], :] 
-            for idx in range(self.num_envs)
-        ]
-        fg_similarity = [
-            fg_similarity[idx][seg_mask_fg[idx], :] 
-            for idx in range(self.num_envs)
-        ]
+        # # 获取前景相似度
+        # fg_similarity = self.similarity.reshape(
+        #     self.num_envs, -1, len(self.texts))
+        # fg_similarity = [
+        #     fg_similarity[idx, self.fg_coord[idx], :] 
+        #     for idx in range(self.num_envs)
+        # ]
+        # fg_similarity = [
+        #     fg_similarity[idx][seg_mask_fg[idx], :] 
+        #     for idx in range(self.num_envs)
+        # ]
 
         # 将前景相似度聚合到体素网格中
         for env_idx in range(self.num_envs):
@@ -344,62 +344,62 @@ class SemanticOccDrone(OccMapDrone):
             self.height_map[env_idx,
                 pts_idx_3D[:, 0], pts_idx_3D[:, 1]] = current_heights
             
-            # 使用前景点云更新语义相似度
-            pts_idx_3D_fg = pts_idx_all_fg[env_idx]
+            # # 使用前景点云更新语义相似度
+            # pts_idx_3D_fg = pts_idx_all_fg[env_idx]
 
-            if (isinstance(pts_idx_3D_fg, list) and \
-                len(pts_idx_3D_fg) == 0) or \
-                pts_idx_3D_fg.shape[0] == 0:
-                continue            
+            # if (isinstance(pts_idx_3D_fg, list) and \
+            #     len(pts_idx_3D_fg) == 0) or \
+            #     pts_idx_3D_fg.shape[0] == 0:
+            #     continue            
             
-            # 通过accumulate_idx将点云相似度聚合到当前体素网格中
-            fg_similarity_env = fg_similarity[env_idx]
-            # 使用bound_masks过滤超出范围的相似度
-            bound_mask = infos_fg[env_idx][0]
-            fg_similarity_env = fg_similarity_env[bound_mask]
+            # # 通过accumulate_idx将点云相似度聚合到当前体素网格中
+            # fg_similarity_env = fg_similarity[env_idx]
+            # # 使用bound_masks过滤超出范围的相似度
+            # bound_mask = infos_fg[env_idx][0]
+            # fg_similarity_env = fg_similarity_env[bound_mask]
 
-            accumulate_idx = infos_fg[env_idx][1]  
-            current_similarity = torch.zeros(
-                len(pts_idx_3D_fg), len(self.texts),
-                dtype=torch.float32, device=self.device, requires_grad=False)
-            torch_scatter.scatter(
-                src=fg_similarity_env, index=accumulate_idx, out=current_similarity, reduce='mean', dim=0)
+            # accumulate_idx = infos_fg[env_idx][1]  
+            # current_similarity = torch.zeros(
+            #     len(pts_idx_3D_fg), len(self.texts),
+            #     dtype=torch.float32, device=self.device, requires_grad=False)
+            # torch_scatter.scatter(
+            #     src=fg_similarity_env, index=accumulate_idx, out=current_similarity, reduce='mean', dim=0)
 
-            # 聚合到全局语义占据图中，根据命中数加权
-            # 计算之前相似度
-            previous_similarity = self.sem_occ_map[
-                env_idx, pts_idx_3D_fg[:, 0], pts_idx_3D_fg[:, 1], :3]
-            previous_hit_cnt = self.sem_occ_map_hit_cnt[
-                env_idx, pts_idx_3D_fg[:, 0], pts_idx_3D_fg[:, 1]]
+            # # 聚合到全局语义占据图中，根据命中数加权
+            # # 计算之前相似度
+            # previous_similarity = self.sem_occ_map[
+            #     env_idx, pts_idx_3D_fg[:, 0], pts_idx_3D_fg[:, 1], :3]
+            # previous_hit_cnt = self.sem_occ_map_hit_cnt[
+            #     env_idx, pts_idx_3D_fg[:, 0], pts_idx_3D_fg[:, 1]]
 
-            # 当前命中数
-            current_hit_cnt = infos_fg[env_idx][2]
+            # # 当前命中数
+            # current_hit_cnt = infos_fg[env_idx][2]
 
-            # 加权（平滑更新策略,alpha为前后权值）
-            alpha = self.config.alpha
-            current_hit_cnt_weighted = alpha * current_hit_cnt
-            previous_hit_cnt_weighted = (1 - alpha) * previous_hit_cnt
-            weight_sum = current_hit_cnt_weighted + previous_hit_cnt_weighted
+            # # 加权（平滑更新策略,alpha为前后权值）
+            # alpha = self.config.alpha
+            # current_hit_cnt_weighted = alpha * current_hit_cnt
+            # previous_hit_cnt_weighted = (1 - alpha) * previous_hit_cnt
+            # weight_sum = current_hit_cnt_weighted + previous_hit_cnt_weighted
 
-            current_similarity_weighted = \
-                current_similarity * current_hit_cnt_weighted.reshape(-1, 1)
-            previous_similarity_weighted = \
-                previous_similarity * previous_hit_cnt_weighted.reshape(-1, 1)
+            # current_similarity_weighted = \
+            #     current_similarity * current_hit_cnt_weighted.reshape(-1, 1)
+            # previous_similarity_weighted = \
+            #     previous_similarity * previous_hit_cnt_weighted.reshape(-1, 1)
 
-            update_similarity = \
-                current_similarity_weighted + previous_similarity_weighted
-            update_similarity = update_similarity / weight_sum.reshape(-1, 1)
+            # update_similarity = \
+            #     current_similarity_weighted + previous_similarity_weighted
+            # update_similarity = update_similarity / weight_sum.reshape(-1, 1)
 
-            # 更新相似度
-            self.sem_occ_map[
-                env_idx,
-                pts_idx_3D_fg[:, 0], pts_idx_3D_fg[:, 1], :3] = update_similarity
-            # 更新命中数
-            self.sem_occ_map_hit_cnt[
-                env_idx, 
-                pts_idx_3D_fg[:, 0], pts_idx_3D_fg[:, 1]] = weight_sum
-            # 更新前景占用
-            self.fg_occ[env_idx, pts_idx_3D_fg[:, 0], pts_idx_3D_fg[:, 1]] = 1
+            # # 更新相似度
+            # self.sem_occ_map[
+            #     env_idx,
+            #     pts_idx_3D_fg[:, 0], pts_idx_3D_fg[:, 1], :3] = update_similarity
+            # # 更新命中数
+            # self.sem_occ_map_hit_cnt[
+            #     env_idx, 
+            #     pts_idx_3D_fg[:, 0], pts_idx_3D_fg[:, 1]] = weight_sum
+            # # 更新前景占用
+            # self.fg_occ[env_idx, pts_idx_3D_fg[:, 0], pts_idx_3D_fg[:, 1]] = 1
 
     def visualize_ground_truth_sem_map(self, env_idx):
 
