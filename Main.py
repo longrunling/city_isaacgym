@@ -361,8 +361,93 @@ def test_sem_drone_eval():
         VecTask_cfg, Env_Config.rl_device, Env_Config.sim_device,
         Env_Config.graphics_device_id, Env_Config.headless, **paras)
     
-    from Envs.Wrappers_SB3 import EnvWrapperSB3
+    from Envs.Wrappers_SB3 import EnvWrapperSB3, EnvWrapperSB3_eval
     train_env_sb3 = EnvWrapperSB3(train_env)
+
+    from stable_baselines3.common.vec_env.subproc_vec_env import SubprocVecEnv
+    from Envs.Wrappers_SB3 import make_env_register
+
+    env_gen.clear()
+    paras = {'simple_citygen': env_gen}
+
+    eval_env = SubprocVecEnv(
+        [
+            make_env_register(
+                VecTask_cfg, 
+                Env_Config.rl_device, 
+                Env_Config.sim_device,
+                Env_Config.graphics_device_id,
+                Env_Config.headless,
+                **paras
+            )
+        ]
+    )
+    eval_env = EnvWrapperSB3_eval(eval_env)
+    
+    from stable_baselines3.common.policies import ActorCriticPolicy_Train_Eval
+    from Train.Network_SB3 import Hybrid_Encoder, Height_Map_Encoder
+    # ===== Setup the config =====
+    config = dict(
+        algo=dict(
+            policy=ActorCriticPolicy_Train_Eval,
+            policy_kwargs=dict(
+                net_arch=[],
+                features_extractor_class=Height_Map_Encoder,
+                features_extractor_kwargs=dict(
+                    feature_dim = 256,
+                    state_input_shape = {
+                        'state': (train_env_sb3.buffer_size, 
+                                  train_env_sb3.action_size),
+                        'occ_map': tuple(train_env_sb3.sem_map_size.tolist())
+                    }
+                )
+            ),
+            env=train_env_sb3,
+            learning_rate=1e-4,
+            gamma=0.99,
+            gae_lambda=0.95,
+            target_kl=0.2,
+            max_grad_norm=1,
+            n_steps=128,  # steps to collect in each env
+            n_epochs=5,
+            batch_size=128,
+            clip_range=0.2,
+            vf_coef=0.8,
+            clip_range_vf=0.2,
+            ent_coef=0.01,
+            tensorboard_log='./runs/',
+            create_eval_env=False,
+            verbose=2,
+            seed=1,
+            device='cuda:0',
+        ),
+
+        # Meta data
+        gpu_simulation=True,
+    )    
+
+    from stable_baselines3.ppo.ppo_grid_obs import PPO_Grid_Obs
+    model = PPO_Grid_Obs(**config["algo"])
+
+    save_freq = 10000
+    # 每个环境采eval_freq后进行一次评估
+    eval_freq = 1000
+
+    model.learn(
+        # training
+        total_timesteps = train_env_sb3.num_envs * 128 * 1000,
+        reset_num_timesteps=True,
+
+        # eval
+        eval_env=eval_env,
+        eval_freq=eval_freq,
+        n_eval_episodes=4,
+        eval_log_path=None,
+
+        # logging
+        tb_log_name='height_map',  # Should place the algorithm name here!
+        log_interval=1,
+    )
 
     eval_env = RLDrone_Sem_eval(
         VecTask_cfg, Env_Config.rl_device, Env_Config.sim_device,

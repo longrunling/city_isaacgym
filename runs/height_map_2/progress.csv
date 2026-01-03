@@ -1,3 +1,0 @@
-rollout/episode_reward_height_coverage,rollout/episode_reward_short_path,time/time_elapsed,time/rollout,rollout/episode_length,time/fps,time/total_timesteps,time/iterations,rollout/episode_reward_sum,train/clip_range_vf,time/training,train/value_loss,train/explained_variance,train/clip_range,train/approx_kl,train/learning_rate,train/policy_gradient_loss,train/clip_fraction,train/n_updates,train/entropy_loss,train/loss
-0.454,-20.155,20,19.7375590801239,15.355,207,4096,1,7.065,,,,,,,,,,,,
-0.6989,-82.705,41,19.835841178894043,59.905,206,8192,2,5.7078,0.2,1.7354528903961182,13.019863456487656,0.007333338260650635,0.2,0.05371323,0.0001,-0.0798039703629911,0.385986328125,5,-19.381966853141783,8.816083908081055

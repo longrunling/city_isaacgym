@@ -142,7 +142,7 @@ def evaluate_policy_grid_obs(
     callback: Optional[Callable[[Dict[str, Any], Dict[str, Any]], None]] = None,
     reward_threshold: Optional[float] = None,
     return_episode_rewards: bool = False,
-    return_AUC: bool = True,
+    return_AUC: bool = False,
     return_Accuracy: bool = True,
     warn: bool = True,
 ) -> Union[Tuple[float, float], Tuple[List[float], List[int]]]:
@@ -197,10 +197,11 @@ def evaluate_policy_grid_obs(
         )
 
     # NOTE: align with the args_eval.num_envs in xxx_eval.py
-    # n_envs = env.num_envs
-    n_envs = 50     # 50 evaluating envs
-    max_length = 30     # 30 steps per episode
+    n_envs = n_eval_episodes
+    # n_envs = 50     # 50 evaluating envs
+    max_length = 100     # 30 steps per episode
 
+    # return_AUC = False
 
     episode_rewards = []
     episode_lengths = []
@@ -324,7 +325,7 @@ def evaluate_policy_grid_obs(
                                 # Only increment at the real end of an episode
                                 episode_counts[i] += 1
                         else:   # <-
-                            accuracy = accuracies[str(i)]
+                            accuracy = accuracies[i]
                             episode_rewards.append(current_rewards[i].clone())
                             episode_lengths.append(current_lengths[i].clone())
                             episode_accuracies.append(accuracy)   # the order doesn't matter
