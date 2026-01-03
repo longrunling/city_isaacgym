@@ -147,12 +147,16 @@ class RLDrone_Sem(SemanticOccDrone):
 
         # 计算height_map探索程度
         residual = torch.abs(height_map - gt_height_map)
-        residual_ratio = residual / (gt_height_map)
+        
         # 当height_map与gt_height_map的差值小于一定百分比时，认为该位置被探索到
+        residual_ratio = residual / gt_height_map
         mask = residual_ratio < self.config.residual_ratio_threshold
+
+        # 当height_map与gt_height_map的差值小于一定值时，认为该位置被探索到
+        # mask = residual < self.config.residual_threshold
+        
         area = self.sem_map_size[0] * self.sem_map_size[1]
         height_coverage = torch.sum(mask, dim=(1,2)) / area
-
         self.height_coverage_buf.append(height_coverage)
 
     def get_observations(self):

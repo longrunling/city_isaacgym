@@ -118,8 +118,9 @@ class RLDrone_Sem_Config(SemanticOccDrone_Config):
    # height_map覆盖率参数
    # height_map差值比率
    residual_ratio_threshold = 0.1
+   residual_threshold = 0.1
    # 当height_map达到该覆盖率时，认为任务完成
-   height_coverage_threshold = 0.95
+   height_coverage_threshold = 0.9
    height_coverage_scale = 1000
 
    # 终止条件参数

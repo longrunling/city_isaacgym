@@ -966,5 +966,5 @@ class simple_citygen():
                 # 填回高度图
                 height_map[env_idx] = max_vals.view(
                     semantic_map_size[0], semantic_map_size[1])
-                
+                height_map.cpu().numpy()
         return semantic_map, height_map

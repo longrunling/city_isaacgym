@@ -409,8 +409,8 @@ def test_sem_drone_eval():
             learning_rate=1e-3,
             gamma=0.99,
             gae_lambda=0.95,
-            target_kl=0.2,
-            max_grad_norm=1,
+            target_kl=0.05,
+            max_grad_norm=5,
             n_steps=128,  # steps to collect in each env
             n_epochs=5,
             batch_size=128,

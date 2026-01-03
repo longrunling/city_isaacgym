@@ -336,7 +336,7 @@ class SemanticOccDrone(OccMapDrone):
                 pts_idx_3D[:, 0], pts_idx_3D[:, 1]].clone()
             torch_scatter.scatter(
                 src=heights_env, index=accumulate_idx, out=current_heights, reduce='max', dim=0)
-
+            
             # height最小值,以区分探索和未探索
             current_heights = torch.clamp(current_heights, min=self.config.min_height)
 
